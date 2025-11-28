@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Resume</title>
+    <style>
+        /* ONE PAGE COMPACT SETTINGS */
+        @page {
+            size: A4;
+            margin: 0.3in 0.5in;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9.5pt;
+            color: #000;
+            line-height: 1.25;
+            margin: 0;
+            padding: 0;
+        }
+
+        a { color: #2E568B; text-decoration: none; }
+
+        /* HEADER */
+        .header { text-align: center; margin-bottom: 8px; }
+        .name {
+            font-size: 16pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            color: #2E568B;
+        }
+
+        /* Contact Info and Links Styling */
+        /* Note: Ampersand removed from comment above to prevent XML error */
+        .contact-info { font-size: 9pt; margin-bottom: 1px; color: #444; }
+        .links { font-size: 9pt; margin-top: 1px; }
+        .link-text { color: #2E568B; font-weight: 500; }
+
+        /* SECTION HEADERS */
+        .section-header {
+            font-size: 10.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #2E568B;
+            color: #2E568B;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            padding-bottom: 1px;
+        }
+
+        /* SKILLS */
+        .skill-row { margin-bottom: 1px; font-size: 9pt; }
+        .skill-cat { font-weight: bold; color: #333; }
+
+        /* CONTENT BLOCKS */
+        .content-block { margin-bottom: 6px; }
+
+        .flex-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 0px;
+        }
+        .left-col { display: table-cell; text-align: left; font-weight: bold; font-size: 10pt; }
+        .right-col { display: table-cell; text-align: right; font-size: 9pt; font-style: italic; color: #555; }
+
+        /* Role and Tech Stack */
+        .role-title { font-style: italic; font-size: 9.5pt; margin-bottom: 1px; font-weight: 500; }
+        .tech-stack { font-size: 8.5pt; font-style: italic; color: #555; margin-bottom: 1px; }
+
+        /* BULLETS */
+        ul { margin: 1px 0; padding-left: 15px; }
+        li { margin-bottom: 1px; text-align: justify; font-size: 9.5pt; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="name" th:text="${data.fullName}">UROJ ALI</div>
+    <div class="contact-info">
+        <span class="link-text" th:text="${data.contactInfo}">Contact Info</span>
+    </div>
+    <div class="links">
+        LinkedIn: <span class="link-text" th:text="${data.linkedin}">link</span> |
+        GitHub: <span class="link-text" th:text="${data.github}">link</span>
+    </div>
+</div>
+
+<div class="section-header">Professional Summary</div>
+<div th:text="${data.summary}" style="text-align: justify; font-size: 9.5pt;">
+    Summary...
+</div>
+
+<div class="section-header">Experience</div>
+<div class="content-block" th:each="exp : ${data.experience}">
+    <div class="flex-row">
+        <div class="left-col" th:text="${exp.company}">Company</div>
+        <div class="right-col" th:text="${exp.duration}">Date</div>
+    </div>
+    <div class="role-title" th:text="${exp.role}">Role</div>
+    <ul>
+        <li th:each="point : ${exp.bullets}" th:text="${point}">Point...</li>
+    </ul>
+</div>
+
+<div class="section-header">Projects</div>
+<div class="content-block" th:each="proj : ${data.projects}">
+    <div style="font-weight: bold; font-size: 10pt; margin-bottom: 1px;" th:text="${proj.name}">
+        Project Name
+    </div>
+
+    <div class="tech-stack" th:if="${proj.techStack != null and !proj.techStack.isEmpty()}">
+        <span style="font-weight: bold;">Tech Stack: </span>
+        <span th:text="${proj.techStack}">Java...</span>
+    </div>
+    <ul>
+        <li th:each="point : ${proj.bullets}" th:text="${point}">Point...</li>
+    </ul>
+</div>
+
+<div class="section-header">Technical Skills</div>
+<div style="margin-top: 2px;">
+    <div class="skill-row" th:each="skill : ${data.skills}">
+        <span class="skill-cat" th:text="${skill.category} + ':'">Category:</span>
+        <span th:text="${skill.values}">Java, Spring...</span>
+    </div>
+</div>
+
+<div class="section-header">Education</div>
+<div class="content-block" th:each="edu : ${data.education}">
+    <div class="flex-row">
+        <div class="left-col" th:text="${edu.institution}">University</div>
+        <div class="right-col" th:text="${edu.duration}">Date</div>
+    </div>
+    <div>
+        <span th:text="${edu.degree}">Degree</span> |
+        <span th:text="${edu.gpa}">GPA</span>
+    </div>
+</div>
+
+</body>
+</html>
