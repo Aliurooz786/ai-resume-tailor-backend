@@ -20,16 +20,19 @@ import org.springframework.web.client.RestTemplate;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GeminiAIService {
+public class ResumeTailoringService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${gemini.api.url}")
+    @Value("${openai.api.url}")
     private String apiUrl;
 
-    @Value("${gemini.api.key}")
+    @Value("${openai.api.key}")
     private String apiKey;
+
+    @Value("${openai.api.model}")
+    private String model;
 
     @PostConstruct
     public void init() {
@@ -78,7 +81,7 @@ public class GeminiAIService {
             Return ONLY raw JSON.
             """, rawPdfText.substring(0, Math.min(rawPdfText.length(), 7000)));
 
-        String jsonResponse = callGeminiApi(prompt);
+        String jsonResponse = executePrompt(prompt);
         return convertJsonToResumeData(jsonResponse);
     }
 
@@ -110,7 +113,7 @@ public class GeminiAIService {
         - DO NOT use double quotes (") inside strings. Use single quotes (') only.
         - Return valid JSON matching the exact input structure.
         """, currentDataJson, jobDescription);
-            String tailoredJson = callGeminiApi(prompt);
+            String tailoredJson = executePrompt(prompt);
             return convertJsonToResumeData(tailoredJson);
 
         } catch (Exception e) {
@@ -119,35 +122,44 @@ public class GeminiAIService {
         }
     }
 
-    private String callGeminiApi(String prompt) {
+    private String executePrompt(String prompt) {
         try {
-            String safePrompt = prompt.replace("\"", "\\\"");
+            JSONObject message = new JSONObject();
+            message.put("role", "user");
+            message.put("content", prompt);
 
-            String requestBody = "{ \"contents\": [{ \"parts\": [{ \"text\": \"" + safePrompt + "\" }] }] }";
+            JSONArray messages = new JSONArray();
+            messages.put(message);
+
+            JSONObject responseFormat = new JSONObject();
+            responseFormat.put("type", "json_object");
+
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("model", model);
+            requestBody.put("messages", messages);
+            requestBody.put("response_format", responseFormat);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
 
-            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-            String finalUrl = apiUrl + "?key=" + apiKey;
+            HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(finalUrl, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
             return extractTextFromResponse(response.getBody());
         } catch (Exception e) {
             log.error("API Call Failed: {}", e.getMessage());
-            throw new RuntimeException("Gemini API Error", e);
+            throw new RuntimeException("LLM API Error", e);
         }
     }
 
     private String extractTextFromResponse(String rawJson) {
         try {
             JSONObject root = new JSONObject(rawJson);
-            String text = root.getJSONArray("candidates")
+            String text = root.getJSONArray("choices")
                     .getJSONObject(0)
-                    .getJSONObject("content")
-                    .getJSONArray("parts")
-                    .getJSONObject(0)
-                    .getString("text");
+                    .getJSONObject("message")
+                    .getString("content");
 
             int startIndex = text.indexOf("{");
             int endIndex = text.lastIndexOf("}");
@@ -156,7 +168,7 @@ public class GeminiAIService {
             }
             return text;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse Gemini Response", e);
+            throw new RuntimeException("Failed to parse LLM Response", e);
         }
     }
 
