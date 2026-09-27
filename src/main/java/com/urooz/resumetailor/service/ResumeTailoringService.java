@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GeminiAIService {
+public class ResumeTailoringService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -81,7 +81,7 @@ public class GeminiAIService {
             Return ONLY raw JSON.
             """, rawPdfText.substring(0, Math.min(rawPdfText.length(), 7000)));
 
-        String jsonResponse = callOpenAiApi(prompt);
+        String jsonResponse = executePrompt(prompt);
         return convertJsonToResumeData(jsonResponse);
     }
 
@@ -113,7 +113,7 @@ public class GeminiAIService {
         - DO NOT use double quotes (") inside strings. Use single quotes (') only.
         - Return valid JSON matching the exact input structure.
         """, currentDataJson, jobDescription);
-            String tailoredJson = callOpenAiApi(prompt);
+            String tailoredJson = executePrompt(prompt);
             return convertJsonToResumeData(tailoredJson);
 
         } catch (Exception e) {
@@ -122,7 +122,7 @@ public class GeminiAIService {
         }
     }
 
-    private String callOpenAiApi(String prompt) {
+    private String executePrompt(String prompt) {
         try {
             JSONObject message = new JSONObject();
             message.put("role", "user");
@@ -149,7 +149,7 @@ public class GeminiAIService {
             return extractTextFromResponse(response.getBody());
         } catch (Exception e) {
             log.error("API Call Failed: {}", e.getMessage());
-            throw new RuntimeException("OpenAI API Error", e);
+            throw new RuntimeException("LLM API Error", e);
         }
     }
 
@@ -168,7 +168,7 @@ public class GeminiAIService {
             }
             return text;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse OpenAI Response", e);
+            throw new RuntimeException("Failed to parse LLM Response", e);
         }
     }
 

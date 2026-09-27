@@ -1,7 +1,7 @@
 package com.urooz.resumetailor.controller;
 
 import com.urooz.resumetailor.dto.ResumeData;
-import com.urooz.resumetailor.service.GeminiAIService;
+import com.urooz.resumetailor.service.ResumeTailoringService;
 import com.urooz.resumetailor.service.PdfExtractionService;
 import com.urooz.resumetailor.service.PdfGenerationService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ResumeController {
 
     private final PdfExtractionService pdfExtractionService;
-    private final GeminiAIService geminiAIService;
+    private final ResumeTailoringService resumeTailoringService;
     private final PdfGenerationService pdfGenerationService;
 
     @PostMapping(value = "/tailor", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -33,10 +33,10 @@ public class ResumeController {
             String rawResumeText = pdfExtractionService.extractTextFromPdf(file);
             log.debug("Raw text extracted. Length: {}", rawResumeText.length());
 
-            ResumeData structuredData = geminiAIService.parseResumeTextToStructure(rawResumeText);
+            ResumeData structuredData = resumeTailoringService.parseResumeTextToStructure(rawResumeText);
             log.debug("Resume parsed into structure. Name: {}", structuredData.getFullName());
 
-            ResumeData tailoredData = geminiAIService.tailorResumeData(structuredData, jobDescription);
+            ResumeData tailoredData = resumeTailoringService.tailorResumeData(structuredData, jobDescription);
             log.debug("Resume data optimized for JD.");
 
             byte[] pdfBytes = pdfGenerationService.generatePdf(tailoredData);
